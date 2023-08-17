@@ -17,7 +17,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   # Execute some command on Mac
 else
   # Linux
-  sudo apt update && sudo apt install -y pipenv 
+  sudo apt update 
+  sudo apt install -y pipenv 
   pipenv --python 3.10 
   pipenv shell 
   pipenv install requests

@@ -22,10 +22,21 @@ class NTUSTBulletin:
         rows = tbody.find_all('tr')
         data = []
         for row in rows:
+        # format: [date , unit , title , url ]
             row_data = []
+            url = ""
+            # search for url in each row data 
             tds = row.find_all('td')
             for td in tds:
                 row_data.append(td.text.strip().replace(' ', '').replace('\t', '').replace('\n', ''))
+                
+                a_element = td.find("a")
+                # is not empty 
+                if a_element:
+        	    	href = a.get("href")
+					row_data.append(href)
+                else:
+					row_data.append("No link here")
             data.append(row_data)
         return header, data
 
