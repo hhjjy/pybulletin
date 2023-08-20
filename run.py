@@ -57,7 +57,7 @@ class NTUSTBulletin:
         # self.save_to_csv(header, data)
 
 
-# 使用类获取网页表格数据
+# # 使用类获取网页表格数据
 all_data = []
 for page in range(1, 160):
     print(f"page :{page}...")

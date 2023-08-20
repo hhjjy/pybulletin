@@ -2,6 +2,7 @@ import mysql.connector  # 載入套件
 import csv  # 引入 csv
 import requests  # 引入 request
 from bs4 import BeautifulSoup as bs  # 從bs4 引入 BeautifulSoup 並取名 bs
+import re
 
 try:
     connection = mysql.connector.connect(  # 建立MySQL連線
