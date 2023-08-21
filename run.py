@@ -32,7 +32,7 @@ class NTUSTBulletin:
             tds = row.find_all("td")
             for td in tds:
                 row_data.append(
-                    td.text.strip().replace(" ", "").replace("\t", "").replace("\n", "").replace(",","").replace('"',"")
+                    td.text.strip().replace(" ", "").replace("\t", "").replace("\n", "").replace(",","").replace('"',"").replace('|','')
                 )
 
                 a_element = td.find("a")
