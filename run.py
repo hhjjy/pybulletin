@@ -59,7 +59,7 @@ class NTUSTBulletin:
 
 # # 使用类获取网页表格数据
 all_data = []
-for page in range(1, 160):
+for page in range(1, 9):
     print(f"page :{page}...")
     ntust_bulletin = NTUSTBulletin(page)
     header, data = ntust_bulletin.run()
