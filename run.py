@@ -68,6 +68,6 @@ for page in range(1, 160):
 # 儲存
 filename = "ouput.csv"
 with open(filename, "w", newline="", encoding="utf-8") as f:
-    writer = csv.writer(f)
+    writer = csv.writer(f, quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(header)
     writer.writerows(all_data)
