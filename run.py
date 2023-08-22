@@ -21,6 +21,7 @@ class NTUSTBulletin:
         thead_tr = thead.find("tr")
         thead_th_list = thead_tr.find_all("th")
         header = [th.text for th in thead_th_list]
+        header.append("url")
         tbody = table.find("tbody")
         rows = tbody.find_all("tr")
         data = []
@@ -31,14 +32,19 @@ class NTUSTBulletin:
             # search for url in each row data
             tds = row.find_all("td")
             for td in tds:
+                temp = td.text.strip().replace(" ", "").replace("\t", "").replace("\n", "").replace(",","").replace('"',"").replace('|','').replace(",","").replace('“',"")
                 row_data.append(
-                    td.text.strip().replace(" ", "").replace("\t", "").replace("\n", "").replace(",","").replace('"',"").replace('|','')
+                    temp
                 )
-
+                
                 a_element = td.find("a")
                 # is not empty
                 if a_element:
                     href = a_element.get("href")
+                    # url 移除結尾/
+                    if href.endswith("/"):
+                        print(href)
+                        href = href [:-1]
                     row_data.append(href)
             data.append(row_data)
         return header, data
@@ -56,7 +62,6 @@ class NTUSTBulletin:
         return self.parse_html(response.text)
         # self.save_to_csv(header, data)
 
-
 # # 使用类获取网页表格数据
 all_data = []
 for page in range(1, 9):
@@ -64,10 +69,9 @@ for page in range(1, 9):
     ntust_bulletin = NTUSTBulletin(page)
     header, data = ntust_bulletin.run()
     all_data += data
-
 # 儲存
 filename = "ouput.csv"
 with open(filename, "w", newline="", encoding="utf-8") as f:
-    writer = csv.writer(f,  quoting=csv.QUOTE_NONE)
+    writer = csv.writer(f,delimiter=',', quotechar='',quoting=csv.QUOTE_NONE,escapechar='\\')
     writer.writerow(header)
     writer.writerows(all_data)
