@@ -4,7 +4,12 @@ from bs4 import BeautifulSoup
 import time ,os
 import difflib
 import pprint
-        
+# [[標題,.....,url]轉成[["標題,...,url"]]
+def list_row_to_str(list_data):
+    temp = list_data[::]
+    for i in range(len(temp)):
+        temp[i] = ",".join(temp[i])
+    return temp
 class NTUSTBulletin:
     def __init__(self, page):
         self.page = page
@@ -27,13 +32,6 @@ class NTUSTBulletin:
         table = soup.find("table")
         return table.prettify().encode("utf-8")
     
-    # you need to run parsehtml first ! 
-    def convert_table_into_list(self):
-        data = self.header[::]
-        data.append(self.data)
-        return data    
-        
-        
     # 解析表格並回傳表格抬頭，表格內容
     def parse_html(self, content):
         soup = BeautifulSoup(content, "html.parser")
@@ -73,17 +71,15 @@ class NTUSTBulletin:
         self.data = data 
     def save_to_csv(self, filename="output.csv"):
         with open(filename, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f,delimiter=',', quotechar='',quoting=csv.QUOTE_NONE,escapechar='\\')
+            writer = csv.writer(f,delimiter=';', quotechar='',quoting=csv.QUOTE_NONE,escapechar='\\')
             writer.writerow(self.header)
             writer.writerows(self.data)
         print(f"Saved table data to {filename}")
     def get_table_list_string(self):
-        temp = [] 
-        header  = self.header[::]
-        data = self.data[::]
-        temp.append(['日期,發佈單位,標題,url\n'])
-        temp.append([",".join(i) for i in data])
-        print(temp)
+        temp = self.data[::]
+        temp.insert(0,self.header)
+        # print(temp)
+        return temp 
     def run(self,save=False):
         response = self.get_html_pages()
         self.parse_html(response.text)
@@ -99,13 +95,14 @@ class TableWatcher:
 
     def get_table_hash(self,content):
         return hash(content)
-    # 如果需要更改則回傳true 
-    def check_table(self, content):
+    # 如果需要資料更改或是檔案不存在 則回傳true 
+    def table_changed(self, content):
         current_hash = self.get_table_hash(content)
+        #第一次執行時檔案不一定存在 
         if not os.path.exists(self.hash_file):
             with open(self.hash_file, 'w') as f:
                 f.write(str(current_hash))
-            return False
+            return True
         #確保檔案存在！
         with open(self.hash_file, 'r+') as f:
             try:
@@ -115,6 +112,7 @@ class TableWatcher:
                 f.seek(0)
                 f.write(str(current_hash))#寫入當前的哈希值
                 f.truncate()
+                return True
             if current_hash != previous_hash:
                 print('Table content changed')
                 # 在这里可以添加发送通知、保存数据等操作
@@ -126,55 +124,32 @@ class TableWatcher:
     #比較output.csv與當前的list差異 
     # []- > str ["row1\n","row2\n","row3"]
     # data [[header],[row1],[row2]]
-    def show_difference(self,old_file_path,list_table):
-        # read from file 
-        with open(old_file_path,"r+") as f :
-            try:
-                old_list_table =  f.read().splitlines(keepends=True)
-                # print(old_file_path)               
-            except:
-                raise FileNotFoundError
-        # print(old_list_table)
-        # for i in range(len(old_list_table)):
-        #     for j in range(len(i)):
-        #         old_list_table[i][j].replace("\n","")
-        # print(old_list_table)
-        
-page = NTUSTBulletin(1) 
-# page.run(save=True)
-# print(page.get_table_list_string())
-watcher = TableWatcher(page.get_url(),'table_hash.txt')
-watcher.show_difference("output.csv",page.get_table_list_string())
-# while True:    
-#data = page.load_from_csv()
-#print(data)
+    def show_difference(self,save_data_csv_file,netword_new_data):
+        # save_data：從csv檔案中存取的資料
+        with open(save_data_csv_file) as csvfile:
+            reader = csv.reader(csvfile, delimiter=';')
+            save_data = list_row_to_str(list(reader))
+        # netword_new_data :從網頁抓下來的新資料
+        netword_new_data = list_row_to_str(netword_new_data)
+        count = 0 
+        diff = []
+        for i in netword_new_data:
+            if i not in save_data:
+                count += 1 
+                diff.append(f"新增：{i}")
+        print(f"共計：新增{count}筆資料")                
+        pprint.pprint(diff)
+        return count 
 
+while(1):
+    page = NTUSTBulletin(1) 
+    page.run(save=True)
+    watcher = TableWatcher(page.get_url(),'table_hash.txt')
+    # todo : bug 不要邊爬邊存 ，有改變在存檔 
+    # 若是資料更新！
+    if watcher.table_changed(page.get_table_str()):
+        # 顯示不同之處
+        watcher.show_difference("output.csv",page.get_table_list_string())
+        # 新增到SQL內 
 
-
-    
-    
-    
-    # if watcher.check_table(page.get_table_str()):
-    #     print("CHANGED")
-    #     #下載資料 
-    #     # page.run()
-    #     #儲存
-    #     # page.save_to_csv()
-    #     # 上傳到數據庫 sql 
-        
-    #     # 發送通知 
-        
-    # time.sleep(5)
-# # # 使用类获取网页表格数据
-# all_data = []
-# for page in range(1, 9):
-#     print(f"page :{page}...")
-#     ntust_bulletin = NTUSTBulletin(page)
-#     header, data = ntust_bulletin.run()
-#     all_data += data
-# # 儲存
-# filename = "ouput.csv"
-# with open(filename, "w", newline="", encoding="utf-8") as f:
-#     writer = csv.writer(f,delimiter=',', quotechar='',quoting=csv.QUOTE_NONE,escapechar='\\')
-#     writer.writerow(header)
-#     writer.writerows(all_data)
+    time.sleep(10)
