@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import time ,os
 import difflib
-        
+import pprint
         
 class NTUSTBulletin:
     def __init__(self, page):
@@ -77,12 +77,18 @@ class NTUSTBulletin:
             writer.writerow(self.header)
             writer.writerows(self.data)
         print(f"Saved table data to {filename}")
-        
-        
-    def run(self):
+    def get_table_list_string(self):
+        temp = [] 
+        header  = self.header[::]
+        data = self.data[::]
+        temp.append(['日期,發佈單位,標題,url\n'])
+        temp.append([",".join(i) for i in data])
+        print(temp)
+    def run(self,save=False):
         response = self.get_html_pages()
-        return self.parse_html(response.text)
-        # self.save_to_csv(header, data)
+        self.parse_html(response.text)
+        if save:
+            self.save_to_csv()
 
 
 
@@ -118,19 +124,27 @@ class TableWatcher:
                 return True
         return False
     #比較output.csv與當前的list差異 
-    # []- > str ["row1","row2","row3"]
-    def show_difference(self,file,list_str):
+    # []- > str ["row1\n","row2\n","row3"]
+    # data [[header],[row1],[row2]]
+    def show_difference(self,old_file_path,list_table):
         # read from file 
-        with open(file,"r+") as f :
+        with open(old_file_path,"r+") as f :
             try:
-                txt_list =  f.readlines()
-                print(txt_list)
+                old_list_table =  f.read().splitlines(keepends=True)
+                # print(old_file_path)               
             except:
                 raise FileNotFoundError
+        # print(old_list_table)
+        # for i in range(len(old_list_table)):
+        #     for j in range(len(i)):
+        #         old_list_table[i][j].replace("\n","")
+        # print(old_list_table)
         
-# page = NTUSTBulletin(1) 
-# watcher = TableWatcher(page.get_url(),'table_hash.txt')
-# watcher.show_difference("output.csv","")
+page = NTUSTBulletin(1) 
+# page.run(save=True)
+# print(page.get_table_list_string())
+watcher = TableWatcher(page.get_url(),'table_hash.txt')
+watcher.show_difference("output.csv",page.get_table_list_string())
 # while True:    
 #data = page.load_from_csv()
 #print(data)

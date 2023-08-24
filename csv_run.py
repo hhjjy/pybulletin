@@ -26,7 +26,7 @@ try:
         cursor.execute(sql)  # 執行SQL指令
         connection.commit()  # 提交至SQL
 
-        with open("ouput.csv", "r") as csvfile:  # 打開 CSV 檔案
+        with open("output.csv", "r") as csvfile:  # 打開 CSV 檔案
             csvreader = csv.reader(csvfile)  # 建立 CSV 讀取器
             next(csvreader)  # 忽略第一行（標題行）
 
